@@ -1,7 +1,11 @@
 import './App.css';
 
 const App = () => {
-  return <></>;
+  return (
+    <div>
+      <h1>Hi</h1>
+    </div>
+  );
 };
 
 export default App;
