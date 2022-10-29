@@ -1,27 +1,191 @@
 import './App.css';
-import { IconMaximize, IconX, IconMinus, IconBrandGit } from '@tabler/icons';
-import { ReactNode as Node } from 'react';
+import {
+	IconMaximize,
+	IconX,
+	IconMinus,
+	IconBrandGit,
+	IconDeviceDesktop,
+	IconFileDiff,
+	IconBook2,
+} from '@tabler/icons';
+import { ReactNode as Node, useEffect, useRef, useState } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
+import { useDebouncedState, useSetState } from '@mantine/hooks';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const { ipcRenderer } = window.require('electron/renderer');
 
-const Skeleton = (props: { head?: Node; side?: Node; body?: Node }) => {
-	const { body, head, side } = props;
+// From: https://stackoverflow.com/a/53276873/13411306
+/**
+ * @description A type like Record but all values are optional
+ * @see https://stackoverflow.com/a/53276873/13411306
+ * @example const myType: OptionalRecord<'a' | 'b', number> = { a?: number; b?: number } = { a: 1 }
+ */
+export type OptionalRecord<K extends keyof any, T> = {
+	[P in K]?: T;
+};
+
+const Skeleton = (props: {
+	head?: Node;
+	side?: Node;
+	body?: Node;
+	sidebarWidth: string;
+	widthSetter: (width: string) => void;
+}) => {
+	const { body, head, side, sidebarWidth, widthSetter } = props;
+
+	const sidebarRef = useRef<HTMLDivElement>(null);
+
+	const [sidebarWidthState, setSidebarWidthState] = useDebouncedState<number>(
+		parseInt(sidebarWidth),
+		1000
+	);
+
+	useEffect(() => {
+		const ro = new ResizeObserver((entries) => {
+			const w = entries[0].contentRect.width;
+
+			setSidebarWidthState(w);
+		});
+
+		ro.observe(sidebarRef.current);
+	}, [sidebarRef]);
+
+	useEffect(() => {
+		widthSetter(`${sidebarWidthState}px`);
+	}, [sidebarWidthState]);
+
 	return (
-		<div className="flex flex-col h-full" data-theme="acrylic">
-			<div className="h-16 bg-base-200">{head}</div>
-			<div className="bg-base-300 flex-grow flex flex-row">
-				<div className="w-60 bg-base-100">{side}</div>
-				<div className="flex-grow bg-base-300 border-t border-l border-white border-opacity-5">
-					{body}
+		<div className="bg-base-300 flex-grow flex flex-row h-full w-full">
+			<div
+				className={`bg-base-200 resize-x overflow-auto max-w-[50%] min-w-[240px] border-r border-white border-opacity-5`}
+				style={{
+					width: sidebarWidth,
+				}}
+				ref={sidebarRef}
+			>
+				{side}
+			</div>
+			<div className="flex flex-col h-full w-full">
+				<div className="h-12 bg-base-200 border-b border-white border-opacity-5">
+					{head}
 				</div>
+				<div className="flex-grow bg-base-300">{body}</div>
 			</div>
 		</div>
 	);
 };
 
 const Content = () => {
-	return <Skeleton body={<LoadingDiv text="Loading Git Desktop..." />} />;
+	const [step, setStep] = useState<'loading' | 'starting' | 'finished'>(
+		'loading'
+	);
+	const [loading, setLoading] = useState(true);
+	const [sidebarMode, setSidebarMode] = useState<'repos' | 'changes'>(
+		'repos'
+	);
+
+	const translations: Record<typeof step, string> = {
+		loading: 'Loading...',
+		starting: 'Starting...',
+		finished: 'Finished!',
+	};
+
+	const [settings, setSettings] = useState<Settings>();
+	const Body = () => {
+		return (
+			<div className="h-full p-2">
+				{!loading ? (
+					<div>
+						<h1>Hi</h1>
+					</div>
+				) : (
+					<LoadingDiv
+						text={translations[step]}
+						withGit={true}
+						key={'loader'}
+					/>
+				)}
+			</div>
+		);
+	};
+
+	const Sidebar = () => {
+		const ModeRepos = () => {
+			return <div className="flex flex-col h-full"></div>;
+		};
+
+		return (
+			<div>
+				<div className="grid grid-cols-2 text-center h-12 border-b border-white border-opacity-5">
+					<div
+						onClick={() => {
+							setSidebarMode('repos');
+						}}
+						className={`${
+							sidebarMode == 'repos'
+								? 'bg-base-100'
+								: 'bg-base-200'
+						} h-full flex cursor-pointer`}
+					>
+						<p className="m-auto flex flex-row space-x-2">
+							<IconBook2 /> Repos
+						</p>
+					</div>
+					<div
+						onClick={() => {
+							setSidebarMode('changes');
+						}}
+						className={`${
+							sidebarMode == 'changes'
+								? 'bg-base-100'
+								: 'bg-base-200'
+						} h-full flex cursor-pointer`}
+					>
+						<p className="m-auto flex flex-row space-x-2">
+							<IconFileDiff /> Changes
+						</p>
+					</div>
+				</div>
+			</div>
+		);
+	};
+
+	useEffect(() => {
+		ipcRenderer.send('window-ready');
+
+		ipcRenderer.on('load-settings', (e, value: Settings) => {
+			setSettings(value);
+			setStep('starting');
+
+			ipcRenderer.removeListener('load-settings', () => {});
+		});
+	}, []);
+
+	useEffect(() => {
+		if (settings && step != 'finished') {
+			setStep('finished');
+			setTimeout(() => {
+				setLoading(false);
+			}, 1000);
+			return;
+		}
+
+		ipcRenderer.send('save-settings', settings);
+	}, [settings]);
+
+	const widthSetter = (width: string) => {
+		setSettings({ ...settings, sidebarWidth: width });
+	};
+
+	return (
+		<Skeleton
+			body={<Body />}
+			side={<Sidebar />}
+			sidebarWidth={settings?.sidebarWidth ?? '15rem'}
+			widthSetter={widthSetter}
+		/>
+	);
 };
 
 const App = () => {
@@ -30,6 +194,7 @@ const App = () => {
 			<div className="webkit-drag h-8 flex flex-row items-center justify-between">
 				<div className="px-2 flex flex-row space-x-1">
 					<IconBrandGit />
+					<IconDeviceDesktop />
 					<p>Git Desktop</p>
 				</div>
 				<div className="webkit-none flex flex-row">
