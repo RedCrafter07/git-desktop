@@ -7,6 +7,11 @@ import {
 	IconDeviceDesktop,
 	IconFileDiff,
 	IconBook2,
+	TablerIcon,
+	IconBrandGithub,
+	IconBrandBitbucket,
+	IconBrandGitlab,
+	IconServer2,
 } from '@tabler/icons';
 import { ReactNode as Node, useEffect, useRef, useState } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
@@ -103,7 +108,51 @@ const Content = () => {
 
 	const Sidebar = () => {
 		const ModeRepos = () => {
-			return <div className="flex flex-col h-full"></div>;
+			return (
+				<div className="flex flex-col h-full">
+					{(settings?.repositories ? settings.repositories : []).map(
+						(repo, i) => {
+							const remoteTypes = [
+								...new Set(repo.remotes.map((r) => r.type)),
+							];
+
+							let Icon: TablerIcon = IconDeviceDesktop;
+
+							if (remoteTypes.length === 1) {
+								switch (remoteTypes[0]) {
+									case 'bitbucket':
+										Icon = IconBrandBitbucket;
+										break;
+									case 'github':
+										Icon = IconBrandGithub;
+										break;
+									case 'gitlab':
+										Icon = IconBrandGitlab;
+										break;
+									default:
+										Icon = IconBrandGit;
+										break;
+								}
+							} else if (remoteTypes.length > 1) {
+								Icon = IconServer2;
+							}
+
+							return (
+								<div
+									className="flex flex-col items-start justify-between p-2 border-b border-white border-opacity-5"
+									key={`repo-${i}`}
+								>
+									<div className="flex flex-row items-center">
+										<Icon size={20} />
+										<div className="ml-2">{repo.name}</div>
+									</div>
+									<div className="flex flex-row items-center"></div>
+								</div>
+							);
+						}
+					)}
+				</div>
+			);
 		};
 
 		return (
@@ -138,6 +187,7 @@ const Content = () => {
 						</p>
 					</div>
 				</div>
+				<ModeRepos />
 			</div>
 		);
 	};
@@ -158,6 +208,10 @@ const Content = () => {
 			setStep('finished');
 			setTimeout(() => {
 				setLoading(false);
+				ipcRenderer.send(
+					'add-repository',
+					'D:\\Programming\\Github\\git-desktop'
+				);
 			}, 1000);
 			return;
 		}
@@ -166,7 +220,7 @@ const Content = () => {
 	}, [settings]);
 
 	const widthSetter = (width: string) => {
-		setSettings({ ...settings, sidebarWidth: width });
+		setSettings((s) => ({ ...s, sidebarWidth: width }));
 	};
 
 	return (
