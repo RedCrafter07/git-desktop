@@ -13,15 +13,17 @@ interface Settings {
 interface Repository {
 	name: string;
 	path: string;
-	remotes: {
-		name: string;
-		url: string;
-		type: 'github' | 'gitlab' | 'bitbucket' | 'other';
-	}[];
+	remotes: Remote[];
 	branches: Branch[];
 }
 
 interface Branch {
 	name: string;
 	localName: string;
+}
+
+interface Remote {
+	name: string;
+	url: string;
+	type: 'github' | 'gitlab' | 'bitbucket' | 'other';
 }
