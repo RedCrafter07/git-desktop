@@ -12,8 +12,8 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
-import dugite from 'dugite';
 import { readFile, writeFile } from 'fs/promises';
+import { simpleGit } from 'simple-git';
 
 export default class AppUpdater {
 	constructor() {
@@ -50,22 +50,6 @@ const installExtensions = async () => {
 		.catch(console.log);
 };
 
-ipcMain.on('minimize', () => {
-	mainWindow?.minimize();
-});
-
-ipcMain.on('maximize', () => {
-	if (mainWindow?.isMaximized()) {
-		mainWindow?.unmaximize();
-	} else {
-		mainWindow?.maximize();
-	}
-});
-
-ipcMain.on('close', () => {
-	mainWindow?.close();
-});
-
 const savePath = app.getPath('userData');
 
 const settingsPath = path.resolve(savePath, 'settings.gdconf');
@@ -84,6 +68,8 @@ const getSettings: () => Promise<Settings> = async () => {
 			defaultBranchName: 'main',
 			sidebarWidth: '240px',
 			repositories: [],
+			autoSwitchToChangesTab: true,
+			autoSwitchToLastRepo: true,
 		};
 		return settings;
 	}
@@ -105,16 +91,71 @@ ipcMain.on('window-ready', async (e) => {
 	e.reply('load-settings', settings);
 });
 
-ipcMain.on('save-setting', async (e, setting: keyof Settings, value) => {
-	const settings = await getSettings();
+ipcMain.on(
+	'save-setting',
+	async <T extends keyof Settings>(
+		e: Electron.IpcMainEvent,
+		setting: T,
+		value: Settings[T]
+	) => {
+		const settings = await getSettings();
 
-	settings[setting] = value;
+		settings[setting] = value;
 
-	await saveSettings(settings);
-});
+		await saveSettings(settings);
+	}
+);
 
 ipcMain.on('save-settings', async (e, settings: Settings) => {
 	await saveSettings(settings);
+});
+
+ipcMain.on('add-repository', async (e, path: string) => {
+	const settings = await getSettings();
+
+	// check if repository has remote
+	const git = simpleGit(path, { binary: 'git' });
+
+	if (settings.repositories.filter((repo) => repo.path === path).length > 0)
+		return;
+
+	const remotes = await git.getRemotes(true);
+
+	settings.repositories.push({
+		path,
+		name: path.split('\\').pop(),
+		branches: [],
+		remotes: remotes.map((r) => {
+			//type has to be github, gitlab, bitbucket or other
+			const type = r.refs.fetch.split('/')[2].split('.')[0];
+
+			return {
+				name: r.name,
+				url: r.refs.fetch,
+				type: type as 'github' | 'gitlab' | 'bitbucket' | 'other',
+			};
+		}),
+	});
+
+	await saveSettings(settings);
+
+	e.reply('repository-added', path);
+});
+
+ipcMain.on('minimize', () => {
+	mainWindow?.minimize();
+});
+
+ipcMain.on('maximize', () => {
+	if (mainWindow?.isMaximized()) {
+		mainWindow?.unmaximize();
+	} else {
+		mainWindow?.maximize();
+	}
+});
+
+ipcMain.on('close', () => {
+	mainWindow?.close();
 });
 
 const createWindow = async () => {
