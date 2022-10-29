@@ -2,14 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+body,
+* {
+	font-family: Figtree;
+}
+
 h1 {
-  @apply text-3xl;
+	@apply text-3xl;
 }
 
 h2 {
-  @apply text-2xl;
+	@apply text-2xl;
 }
 
 h3 {
-  @apply text-xl;
+	@apply text-xl;
+}
+
+.webkit-drag {
+	-webkit-app-region: drag;
+}
+
+.webkit-none {
+	-webkit-app-region: none;
+}
+
+.menu-button {
+	@apply px-2 bg-base-100 hover:bg-opacity-100 bg-opacity-0 h-8 grid place-items-center;
+}
+
+.menu-close-button {
+	@apply bg-red-600 px-2 hover:bg-opacity-100 bg-opacity-0 h-8 grid place-items-center;
 }
