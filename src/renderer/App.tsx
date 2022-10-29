@@ -36,29 +36,20 @@ const Skeleton = (props: {
 
 	const sidebarRef = useRef<HTMLDivElement>(null);
 
-	const [sidebarWidthState, setSidebarWidthState] = useDebouncedState<number>(
-		parseInt(sidebarWidth),
-		1000
-	);
-
 	useEffect(() => {
 		const ro = new ResizeObserver((entries) => {
 			const w = entries[0].contentRect.width;
 
-			setSidebarWidthState(w);
+			widthSetter(`${w}px`);
 		});
 
 		ro.observe(sidebarRef.current);
 	}, [sidebarRef]);
 
-	useEffect(() => {
-		widthSetter(`${sidebarWidthState}px`);
-	}, [sidebarWidthState]);
-
 	return (
 		<div className="bg-base-300 flex-grow flex flex-row h-full w-full">
 			<div
-				className={`bg-base-200 resize-x overflow-auto max-w-[50%] min-w-[240px] border-r border-white border-opacity-5`}
+				className={`bg-base-200 resize-x overflow-auto max-w-[75%] min-w-[240px] border-r border-white border-opacity-5`}
 				style={{
 					width: sidebarWidth,
 				}}
