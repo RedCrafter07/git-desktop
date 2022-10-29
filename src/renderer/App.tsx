@@ -1,5 +1,5 @@
 import './App.css';
-import { IconMaximize, IconX, IconMinus } from '@tabler/icons';
+import { IconMaximize, IconX, IconMinus, IconBrandGit } from '@tabler/icons';
 import { ReactNode as Node } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
 
@@ -28,7 +28,10 @@ const App = () => {
 	return (
 		<div className="flex flex-col h-screen text-base-content bg-base-300">
 			<div className="webkit-drag h-8 flex flex-row items-center justify-between">
-				<div className="px-2">Git Desktop</div>
+				<div className="px-2 flex flex-row space-x-1">
+					<IconBrandGit />
+					<p>Git Desktop</p>
+				</div>
 				<div className="webkit-none flex flex-row">
 					<div
 						className="menu-button"
