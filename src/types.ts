@@ -6,15 +6,18 @@ interface Settings {
 	sidebarWidth: string;
 	repositories: Repository[];
 	lastRepo?: string;
+	autoSwitchToLastRepo: boolean;
+	autoSwitchToChangesTab: boolean;
 }
 
 interface Repository {
 	name: string;
 	path: string;
-	remote: {
-		isRemote: boolean;
+	remotes: {
+		name: string;
 		url: string;
-	};
+		type: 'github' | 'gitlab' | 'bitbucket' | 'other';
+	}[];
 	branches: Branch[];
 }
 
