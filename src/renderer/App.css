@@ -32,5 +32,9 @@ h3 {
 }
 
 .menu-close-button {
-	@apply bg-red-600 px-2 hover:bg-opacity-100 bg-opacity-0 h-8 grid place-items-center;
+	@apply bg-red-600 px-2 hover:bg-opacity-100 hover:text-white bg-opacity-0 h-8 grid place-items-center;
+}
+
+::selection {
+	@apply bg-base-content bg-opacity-25;
 }
