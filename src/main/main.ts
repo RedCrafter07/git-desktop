@@ -13,6 +13,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
 import dugite from 'dugite';
+import { readFile, writeFile } from 'fs/promises';
 
 export default class AppUpdater {
 	constructor() {
@@ -65,6 +66,57 @@ ipcMain.on('close', () => {
 	mainWindow?.close();
 });
 
+const savePath = app.getPath('userData');
+
+const settingsPath = path.resolve(savePath, 'settings.gdconf');
+
+const getSettings: () => Promise<Settings> = async () => {
+	try {
+		const settings: Settings = JSON.parse(
+			await readFile(settingsPath, { encoding: 'utf-8' })
+		);
+		return settings;
+	} catch (error) {
+		const settings: Settings = {
+			savePath: app.getPath('documents'),
+			theme: 'dark',
+			lang: 'en',
+			defaultBranchName: 'main',
+			sidebarWidth: '240px',
+			repositories: [],
+		};
+		return settings;
+	}
+};
+
+const saveSettings = async (settings: Settings) => {
+	if (settings == undefined) return;
+
+	try {
+		await writeFile(settingsPath, await JSON.stringify(settings));
+	} catch (error) {
+		console.log(error);
+	}
+};
+
+ipcMain.on('window-ready', async (e) => {
+	const settings: Settings = await getSettings();
+
+	e.reply('load-settings', settings);
+});
+
+ipcMain.on('save-setting', async (e, setting: keyof Settings, value) => {
+	const settings = await getSettings();
+
+	settings[setting] = value;
+
+	await saveSettings(settings);
+});
+
+ipcMain.on('save-settings', async (e, settings: Settings) => {
+	await saveSettings(settings);
+});
+
 const createWindow = async () => {
 	if (isDebug) {
 		await installExtensions();
@@ -79,9 +131,9 @@ const createWindow = async () => {
 	};
 
 	mainWindow = new BrowserWindow({
-		show: true,
-		width: 1024,
-		height: 728,
+		show: false,
+		width: 1200,
+		height: 890,
 		minWidth: 1024,
 		minHeight: 728,
 		icon: getAssetPath('icon.png'),
@@ -92,7 +144,6 @@ const createWindow = async () => {
 		roundedCorners: true,
 		frame: false,
 		backgroundColor: '#000',
-		skipTaskbar: true,
 	});
 
 	mainWindow.loadURL(resolveHtmlPath('index.html'));
@@ -102,13 +153,10 @@ const createWindow = async () => {
 			throw new Error('"mainWindow" is not defined');
 		}
 
-		mainWindow.setSkipTaskbar(false);
-
 		if (process.env.START_MINIMIZED) {
 			mainWindow.minimize();
 		} else {
 			mainWindow.show();
-			mainWindow.maximize();
 		}
 	});
 
