@@ -13,6 +13,10 @@ import {
 	IconBrandGitlab,
 	IconServer2,
 	IconPlus,
+	IconFileArrowRight,
+	IconFileMinus,
+	IconFilePlus,
+	IconFileText,
 } from '@tabler/icons';
 import { ReactNode as Node, useEffect, useRef, useState } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
@@ -574,7 +578,35 @@ const Content = () => {
 		};
 
 		const ModeChanges = () => {
-			return <></>;
+			return (
+				<>
+					{changes.map((c) => {
+						const { path, type } = c;
+						let Icon: TablerIcon;
+
+						switch (type) {
+							case 'created':
+								Icon = IconFilePlus;
+								break;
+							case 'modified':
+								Icon = IconFileText;
+								break;
+							case 'deleted':
+								Icon = IconFileMinus;
+								break;
+							case 'renamed':
+								Icon = IconFileArrowRight;
+						}
+
+						return (
+							<div className="flex flex-row justify-between p-2 border-b-white border-b border-opacity-5">
+								<Icon />
+								<div>{path}</div>
+							</div>
+						);
+					})}
+				</>
+			);
 		};
 
 		return (
