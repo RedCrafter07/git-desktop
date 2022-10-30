@@ -24,6 +24,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Radio from './components/Radio';
 import Tooltip from './components/Tooltip';
 import { useHotkeys } from '@mantine/hooks';
+import { capitalize } from './util';
 
 const { ipcRenderer: ipc } = window.require('electron/renderer');
 
@@ -152,7 +153,7 @@ const Content = () => {
 			type: 'created' | 'modified' | 'deleted' | 'renamed';
 			path: string;
 		}[]
-	>();
+	>([]);
 	const [diff, setDiff] = useState<Diff>();
 
 	const translations: Record<typeof step, string> = {
@@ -510,7 +511,11 @@ const Content = () => {
 
 						return (
 							<div
-								className="flex flex-col items-start justify-between repo-card"
+								className={`flex flex-col items-start justify-between repo-card ${
+									selectedRepo == repo.path
+										? 'bg-info bg-opacity-100 text-info-content'
+										: 'repo-card-color'
+								}`}
 								key={`repo-${i}`}
 								onClick={async () => {
 									const [changes, diff] =
@@ -523,8 +528,13 @@ const Content = () => {
 									setSelectedRepo(repo.path);
 									setSidebarMode('changes');
 
+									console.log(changes);
+
 									const newChanges = {
-										created: changes.created,
+										created: [
+											...changes.created,
+											...changes.not_added,
+										],
 										modified: changes.modified,
 										deleted: changes.deleted,
 										renamed: changes.renamed,
@@ -549,7 +559,12 @@ const Content = () => {
 												}))
 										)
 										.flat();
-									setChanges(newChangesArr);
+
+									const newChangesSet = [
+										...new Set(newChangesArr),
+									];
+
+									setChanges(newChangesSet);
 								}}
 							>
 								<div className="flex flex-row items-center">
@@ -580,7 +595,7 @@ const Content = () => {
 		const ModeChanges = () => {
 			return (
 				<>
-					{changes.map((c) => {
+					{(changes || []).map((c, i) => {
 						const { path, type } = c;
 						let Icon: TablerIcon;
 
@@ -598,10 +613,62 @@ const Content = () => {
 								Icon = IconFileArrowRight;
 						}
 
+						const splitPath = path.split('/');
+
+						const toTrim =
+							splitPath.length > 1
+								? splitPath.slice(1, -1).join('/')
+								: '';
+
+						const trimmedMiddle = toTrim.slice(0, 5);
+
+						const trimmedPath =
+							splitPath.length > 1
+								? `${splitPath[0]}/${trimmedMiddle}.../${
+										splitPath[splitPath.length - 1]
+								  }`
+								: path;
+
+						let color: string;
+
+						switch (type) {
+							case 'created':
+								color = 'text-success';
+								break;
+							case 'modified':
+								color = 'text-warning';
+								break;
+							case 'deleted':
+								color = 'text-danger';
+								break;
+							case 'renamed':
+								color = 'text-info';
+								break;
+						}
+
 						return (
-							<div className="flex flex-row justify-between p-2 border-b-white border-b border-opacity-5">
-								<Icon />
-								<div>{path}</div>
+							<div
+								className="flex flex-row p-2 border-b-white border-b border-opacity-5 gap-2 hover:bg-base-100 select-none cursor-pointer"
+								key={i}
+							>
+								<input
+									type="checkbox"
+									className="checkbox checkbox-sm rounded-full my-auto"
+								/>
+								<Tooltip label={capitalize(type)} withArrow>
+									<div className="my-auto flex">
+										<Icon className={`my-auto ${color}`} />
+									</div>
+								</Tooltip>
+								<Tooltip
+									label={path}
+									withArrow
+									position="right"
+								>
+									<div className="text-sm my-auto">
+										{trimmedPath}
+									</div>
+								</Tooltip>
 							</div>
 						);
 					})}
