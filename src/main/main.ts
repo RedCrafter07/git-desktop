@@ -8,12 +8,13 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
 import { readFile, writeFile } from 'fs/promises';
 import { simpleGit } from 'simple-git';
+import moment from 'moment';
 
 export default class AppUpdater {
 	constructor() {
@@ -107,14 +108,58 @@ ipcMain.on(
 );
 
 ipcMain.on('save-settings', async (e, settings: Settings) => {
-	await saveSettings(settings);
+	const oldSettings = await getSettings();
+	const { repositories, ...rest } = settings;
+	const newSettings = { ...oldSettings, ...rest };
+	await saveSettings(newSettings);
+});
+
+ipcMain.on('check-repository', async (e, path: string) => {
+	const git = simpleGit(path);
+	const isRepo = await git.checkIsRepo();
+	e.reply('check-repository', isRepo);
+});
+
+ipcMain.on('init-repository', async (e, path: string) => {
+	const git = simpleGit(path);
+	await git.init();
+
+	if (await git.checkIsRepo()) {
+		e.reply('init-repository', true);
+	}
+
+	e.reply('init-repository', true);
+});
+
+ipcMain.on('open-git-folder-dialog', async (e, path: string) => {
+	const result = await dialog.showOpenDialog(mainWindow, {
+		properties: ['openDirectory'],
+		defaultPath: path,
+	});
+
+	if (result.canceled) return;
+
+	const git = simpleGit(result.filePaths[0]);
+	const isRepo = await git.checkIsRepo();
+
+	e.reply('open-git-folder-dialog', {
+		path: result.filePaths[0],
+		isRepo,
+	});
 });
 
 ipcMain.on('add-repository', async (e, path: string) => {
 	const settings = await getSettings();
 
-	// check if repository has remote
+	// Check if there is a git repository initialized
 	const git = simpleGit(path, { binary: 'git' });
+
+	const isRepo = await git.checkIsRepo();
+
+	if (!isRepo) {
+		e.reply('add-repository', { error: 'Not a git repository' });
+		return;
+	}
 
 	if (settings.repositories.filter((repo) => repo.path === path).length > 0)
 		return;
@@ -135,11 +180,18 @@ ipcMain.on('add-repository', async (e, path: string) => {
 				type: type as 'github' | 'gitlab' | 'bitbucket' | 'other',
 			};
 		}),
+		lastEdited: moment().unix(),
 	});
 
 	await saveSettings(settings);
 
-	e.reply('repository-added', path);
+	e.reply('add-repository', { path });
+});
+
+ipcMain.on('get-repositories', async (e) => {
+	const settings = await getSettings();
+
+	e.reply('get-repositories', settings.repositories);
 });
 
 ipcMain.on('minimize', () => {
