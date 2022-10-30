@@ -43,7 +43,7 @@ h3 {
 	@apply p-2 border-b border-white border-opacity-5 select-none cursor-pointer overflow-y-auto;
 }
 
-.repo-card .repo-card-color {
+.repo-card-color {
 	@apply bg-base-100 bg-opacity-0 hover:bg-opacity-50;
 }
 
