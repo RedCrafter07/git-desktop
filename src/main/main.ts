@@ -8,7 +8,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, shell, ipcMain as ipc, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
@@ -86,13 +86,13 @@ const saveSettings = async (settings: Settings) => {
 	}
 };
 
-ipcMain.on('window-ready', async (e) => {
+ipc.on('window-ready', async (e) => {
 	const settings: Settings = await getSettings();
 
 	e.reply('load-settings', settings);
 });
 
-ipcMain.on(
+ipc.on(
 	'save-setting',
 	async <T extends keyof Settings>(
 		e: Electron.IpcMainEvent,
@@ -107,20 +107,20 @@ ipcMain.on(
 	}
 );
 
-ipcMain.on('save-settings', async (e, settings: Settings) => {
+ipc.on('save-settings', async (e, settings: Settings) => {
 	const oldSettings = await getSettings();
 	const { repositories, ...rest } = settings;
 	const newSettings = { ...oldSettings, ...rest };
 	await saveSettings(newSettings);
 });
 
-ipcMain.on('check-repository', async (e, path: string) => {
+ipc.on('check-repository', async (e, path: string) => {
 	const git = simpleGit(path);
 	const isRepo = await git.checkIsRepo();
 	e.reply('check-repository', isRepo);
 });
 
-ipcMain.on('init-repository', async (e, path: string) => {
+ipc.on('init-repository', async (e, path: string) => {
 	const git = simpleGit(path);
 	await git.init();
 
@@ -131,14 +131,14 @@ ipcMain.on('init-repository', async (e, path: string) => {
 	e.reply('init-repository', true);
 });
 
-ipcMain.on('clone-repository', async (e, url: string, path: string) => {
+ipc.on('clone-repository', async (e, url: string, path: string) => {
 	const git = simpleGit(path);
 	await git.clone(url, path);
 
 	e.reply('clone-repository', { success: true });
 });
 
-ipcMain.on('open-git-folder-dialog', async (e, path: string) => {
+ipc.on('open-git-folder-dialog', async (e, path: string) => {
 	const result = await dialog.showOpenDialog(mainWindow, {
 		properties: ['openDirectory'],
 		defaultPath: path,
@@ -155,7 +155,7 @@ ipcMain.on('open-git-folder-dialog', async (e, path: string) => {
 	});
 });
 
-ipcMain.on('add-repository', async (e, path: string) => {
+ipc.on('add-repository', async (e, path: string) => {
 	const settings = await getSettings();
 
 	// Check if there is a git repository initialized
@@ -195,17 +195,17 @@ ipcMain.on('add-repository', async (e, path: string) => {
 	e.reply('add-repository', { path });
 });
 
-ipcMain.on('get-repositories', async (e) => {
+ipc.on('get-repositories', async (e) => {
 	const settings = await getSettings();
 
 	e.reply('get-repositories', settings.repositories);
 });
 
-ipcMain.on('minimize', () => {
+ipc.on('minimize', () => {
 	mainWindow?.minimize();
 });
 
-ipcMain.on('maximize', () => {
+ipc.on('maximize', () => {
 	if (mainWindow?.isMaximized()) {
 		mainWindow?.unmaximize();
 	} else {
@@ -213,7 +213,7 @@ ipcMain.on('maximize', () => {
 	}
 });
 
-ipcMain.on('close', () => {
+ipc.on('close', () => {
 	mainWindow?.close();
 });
 
