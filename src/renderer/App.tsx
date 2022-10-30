@@ -528,8 +528,6 @@ const Content = () => {
 									setSelectedRepo(repo.path);
 									setSidebarMode('changes');
 
-									console.log(changes);
-
 									const newChanges = {
 										created: [
 											...changes.created,
