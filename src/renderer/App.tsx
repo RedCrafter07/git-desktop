@@ -159,11 +159,12 @@ const Content = () => {
 	const AddRepoModal = () => {
 		const [mode, setMode] = useState<'clone' | 'local'>('local');
 		const [repoPath, setRepoPath] = useState('');
+		const [repoURL, setRepoURL] = useState('');
 		const [error, setError] = useState<string | undefined>(undefined);
 
 		return (
 			<div>
-				<h1>Add a new repo</h1>
+				<h1>{mode == 'clone' ? 'Clone' : 'Add'} a repository</h1>
 				<p>How would you like to add it?</p>
 
 				<Radio
