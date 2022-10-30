@@ -125,7 +125,7 @@ const Content = () => {
 								y: 200,
 							}}
 							key={modal.name}
-							className="z-50 fixed top-0 left-0 bg-black bg-opacity-50 w-full h-full grid place-items-center"
+							className="z-50 fixed top-0 left-0 bg-black bg-opacity-50 w-full h-full grid place-items-center backdrop-blur-md"
 						>
 							<div className="bg-base-200 rounded-lg p-4 w-3/4 h-3/4">
 								<div className="flex flex-row justify-end">
