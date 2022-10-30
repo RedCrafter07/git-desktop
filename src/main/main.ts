@@ -12,9 +12,10 @@ import { app, BrowserWindow, shell, ipcMain as ipc, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
-import { readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile } from 'fs/promises';
 import { simpleGit } from 'simple-git';
 import moment from 'moment';
+import { existsSync } from 'fs';
 
 export default class AppUpdater {
 	constructor() {
@@ -133,9 +134,32 @@ ipc.on('init-repository', async (e, path: string) => {
 
 ipc.on('clone-repository', async (e, url: string, path: string) => {
 	const git = simpleGit(path);
-	await git.clone(url, path);
 
-	e.reply('clone-repository', { success: true });
+	try {
+		await git.clone(url, path);
+	} catch (e) {
+		console.log(e);
+		e.reply('clone-repository', { success: false, error: e });
+	}
+
+	const settings = await getSettings();
+
+	const remotes = await git.getRemotes(true);
+
+	settings.repositories.push({
+		path,
+		name: url.split('/').pop().split('.').slice(0, -1).join('.'),
+		lastEdited: moment().unix(),
+		remotes: remotes.map((remote) => ({
+			name: remote.name,
+			type: remote.refs.fetch.split('/')[2] as Remote['type'],
+			url: remote.refs.fetch,
+		})),
+	});
+
+	await saveSettings(settings);
+
+	e.reply('clone-repository', { success: true, error: null });
 });
 
 ipc.on('open-git-folder-dialog', async (e, path: string) => {
@@ -153,6 +177,31 @@ ipc.on('open-git-folder-dialog', async (e, path: string) => {
 		path: result.filePaths[0],
 		isRepo,
 	});
+});
+
+ipc.on('open-clone-folder-dialog', async (e) => {
+	const result = await dialog.showOpenDialog(mainWindow, {
+		properties: ['openDirectory', 'promptToCreate'],
+	});
+	if (result.canceled) return;
+
+	// check if directory has content
+	const files = await readdir(result.filePaths[0]);
+	if (files.length > 0) {
+		e.reply('open-clone-folder-dialog', {
+			path: result.filePaths[0],
+			isEmpty: false,
+		});
+	}
+
+	e.reply('open-clone-folder-dialog', {
+		path: result.filePaths[0],
+		isEmpty: true,
+	});
+});
+
+ipc.on('open-config', async () => {
+	shell.openExternal(settingsPath);
 });
 
 ipc.on('add-repository', async (e, path: string) => {
@@ -176,7 +225,6 @@ ipc.on('add-repository', async (e, path: string) => {
 	settings.repositories.push({
 		path,
 		name: path.split('\\').pop(),
-		branches: [],
 		remotes: remotes.map((r) => {
 			//type has to be github, gitlab, bitbucket or other
 			const type = r.refs.fetch.split('/')[2].split('.')[0];
