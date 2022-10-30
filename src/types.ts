@@ -15,6 +15,7 @@ interface Repository {
 	path: string;
 	remotes: Remote[];
 	branches: Branch[];
+	lastEdited: number;
 }
 
 interface Branch {
