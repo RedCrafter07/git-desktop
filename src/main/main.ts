@@ -258,8 +258,6 @@ ipc.on('get-changes', async (e, path: string) => {
 		status.files.map(async (file) => {
 			const diff = await git.diff([file.path]);
 
-			console.log(diff);
-
 			// check what changed in which line
 			const changes = diff
 				.split('\n')
@@ -284,8 +282,6 @@ ipc.on('get-changes', async (e, path: string) => {
 			};
 		})
 	);
-
-	console.log({ ...status });
 
 	const { isClean, ...cleanStatus } = { ...status };
 
