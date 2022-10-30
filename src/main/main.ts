@@ -150,10 +150,10 @@ ipc.on('clone-repository', async (e, url: string, path: string) => {
 		path,
 		name: url.split('/').pop().split('.').slice(0, -1).join('.'),
 		lastEdited: moment().unix(),
-		remotes: remotes.map((remote) => ({
-			name: remote.name,
-			type: remote.refs.fetch.split('/')[2] as Remote['type'],
-			url: remote.refs.fetch,
+		remotes: remotes.map((r) => ({
+			name: r.name,
+			type: r.refs.fetch.split('/')[2].split('.')[0] as Remote['type'],
+			url: r.refs.fetch,
 		})),
 	});
 
