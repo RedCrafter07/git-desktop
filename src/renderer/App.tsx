@@ -595,83 +595,89 @@ const Content = () => {
 		const ModeChanges = () => {
 			return (
 				<>
-					{(changes || []).map((c, i) => {
-						const { path, type } = c;
-						let Icon: TablerIcon;
+					{(changes || []).length > 0 ? (
+						(changes || []).map((c, i) => {
+							const { path, type } = c;
+							let Icon: TablerIcon;
 
-						switch (type) {
-							case 'created':
-								Icon = IconFilePlus;
-								break;
-							case 'modified':
-								Icon = IconFileText;
-								break;
-							case 'deleted':
-								Icon = IconFileMinus;
-								break;
-							case 'renamed':
-								Icon = IconFileArrowRight;
-						}
+							switch (type) {
+								case 'created':
+									Icon = IconFilePlus;
+									break;
+								case 'modified':
+									Icon = IconFileText;
+									break;
+								case 'deleted':
+									Icon = IconFileMinus;
+									break;
+								case 'renamed':
+									Icon = IconFileArrowRight;
+							}
 
-						const splitPath = path.split('/');
+							const splitPath = path.split('/');
 
-						const toTrim =
-							splitPath.length > 1
-								? splitPath.slice(1, -1).join('/')
-								: '';
+							const toTrim =
+								splitPath.length > 1
+									? splitPath.slice(1, -1).join('/')
+									: '';
 
-						const trimmedMiddle = toTrim.slice(0, 5);
+							const trimmedMiddle = toTrim.slice(0, 5);
 
-						const trimmedPath =
-							splitPath.length > 1
-								? `${splitPath[0]}/${trimmedMiddle}.../${
-										splitPath[splitPath.length - 1]
-								  }`
-								: path;
+							const trimmedPath =
+								splitPath.length > 1
+									? `${splitPath[0]}/${trimmedMiddle}.../${
+											splitPath[splitPath.length - 1]
+									  }`
+									: path;
 
-						let color: string;
+							let color: string;
 
-						switch (type) {
-							case 'created':
-								color = 'text-success';
-								break;
-							case 'modified':
-								color = 'text-warning';
-								break;
-							case 'deleted':
-								color = 'text-danger';
-								break;
-							case 'renamed':
-								color = 'text-info';
-								break;
-						}
+							switch (type) {
+								case 'created':
+									color = 'text-success';
+									break;
+								case 'modified':
+									color = 'text-warning';
+									break;
+								case 'deleted':
+									color = 'text-danger';
+									break;
+								case 'renamed':
+									color = 'text-info';
+									break;
+							}
 
-						return (
-							<div
-								className="flex flex-row p-2 border-b-white border-b border-opacity-5 gap-2 hover:bg-base-100 select-none cursor-pointer"
-								key={i}
-							>
-								<input
-									type="checkbox"
-									className="checkbox checkbox-sm rounded-full my-auto"
-								/>
-								<Tooltip label={capitalize(type)} withArrow>
-									<div className="my-auto flex">
-										<Icon className={`my-auto ${color}`} />
-									</div>
-								</Tooltip>
-								<Tooltip
-									label={path}
-									withArrow
-									position="right"
+							return (
+								<div
+									className="flex flex-row p-2 border-b-white border-b border-opacity-5 gap-2 hover:bg-base-100 select-none cursor-pointer"
+									key={i}
 								>
-									<div className="text-sm my-auto">
-										{trimmedPath}
-									</div>
-								</Tooltip>
-							</div>
-						);
-					})}
+									<input
+										type="checkbox"
+										className="checkbox checkbox-sm rounded-full my-auto"
+									/>
+									<Tooltip label={capitalize(type)} withArrow>
+										<div className="my-auto flex">
+											<Icon
+												className={`my-auto ${color}`}
+											/>
+										</div>
+									</Tooltip>
+									<Tooltip
+										label={path}
+										withArrow
+										position="right"
+									>
+										<div className="text-sm my-auto">
+											{trimmedPath}
+										</div>
+									</Tooltip>
+								</div>
+							);
+						})
+					) : (
+						<div className="p-2">No changes found :/</div>
+					)}
 				</>
 			);
 		};
