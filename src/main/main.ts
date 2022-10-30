@@ -15,7 +15,6 @@ import { resolveHtmlPath } from './util';
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { simpleGit } from 'simple-git';
 import moment from 'moment';
-import { existsSync } from 'fs';
 
 export default class AppUpdater {
 	constructor() {
@@ -247,6 +246,50 @@ ipc.on('get-repositories', async (e) => {
 	const settings = await getSettings();
 
 	e.reply('get-repositories', settings.repositories);
+});
+
+ipc.on('get-changes', async (e, path: string) => {
+	const git = simpleGit(path);
+
+	const status = await git.status();
+
+	// get changes of files
+	const changes = await Promise.all(
+		status.files.map(async (file) => {
+			const diff = await git.diff([file.path]);
+
+			console.log(diff);
+
+			// check what changed in which line
+			const changes = diff
+				.split('\n')
+				.map((l, i) => ({
+					line: i,
+					data: l,
+				}))
+				.filter((line) => {
+					return (
+						line.data.startsWith('+') || line.data.startsWith('-')
+					);
+				})
+				.map(({ line, data: c }) => ({
+					line: line,
+					type: c.startsWith('+') ? 'added' : 'removed',
+					content: c.replace('+', '').replace('-', ''),
+				}));
+
+			return {
+				...file,
+				changes,
+			};
+		})
+	);
+
+	console.log({ ...status });
+
+	const { isClean, ...cleanStatus } = { ...status };
+
+	e.reply('get-changes', cleanStatus, changes);
 });
 
 ipc.on('minimize', () => {
