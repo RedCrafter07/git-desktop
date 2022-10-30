@@ -103,7 +103,9 @@ const Content = () => {
 		ipc.send('get-repositories');
 
 		ipc.once('get-repositories', (e, repos: Repository[]) => {
-			setRepos(repos);
+			setRepos(
+				repos.sort((a, b) => (a.lastEdited < b.lastEdited ? 1 : -1))
+			);
 		});
 	};
 
@@ -530,11 +532,7 @@ const Content = () => {
 	useEffect(() => {
 		if (settings && step != 'finished') {
 			setStep('finished');
-			setRepos(
-				(settings.repositories || []).sort((a, b) =>
-					a.lastEdited < b.lastEdited ? 1 : -1
-				)
-			);
+			refetchRepos();
 			setTimeout(() => {
 				setLoading(false);
 			}, 1000);
