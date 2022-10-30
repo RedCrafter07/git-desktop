@@ -38,3 +38,19 @@ h3 {
 ::selection {
 	@apply bg-base-content bg-opacity-25;
 }
+
+.repo-card {
+	@apply p-2 border-b border-white border-opacity-5 bg-base-100 bg-opacity-0 hover:bg-opacity-50 select-none cursor-pointer overflow-y-auto;
+}
+
+::-webkit-scrollbar {
+	@apply w-2;
+}
+
+::-webkit-scrollbar-track {
+	@apply bg-base-300;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply bg-base-100 bg-opacity-50 hover:bg-opacity-100;
+}
