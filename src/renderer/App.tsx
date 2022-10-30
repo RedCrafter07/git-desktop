@@ -17,6 +17,8 @@ import {
 	IconFileMinus,
 	IconFilePlus,
 	IconFileText,
+	IconEditOff,
+	IconBooksOff,
 } from '@tabler/icons';
 import { ReactNode as Node, useEffect, useRef, useState } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
@@ -591,6 +593,15 @@ const Content = () => {
 		};
 
 		const ModeChanges = () => {
+			if (!selectedRepo)
+				return (
+					<div className="flex flex-row gap-2 p-2">
+						<IconBooksOff size={30} className="my-auto" />
+						<div>
+							Please select a repository to view its changes.
+						</div>
+					</div>
+				);
 			return (
 				<>
 					{(changes || []).length > 0 ? (
@@ -674,7 +685,9 @@ const Content = () => {
 							);
 						})
 					) : (
-						<div className="p-2">No changes found :/</div>
+						<div className="p-2 flex flex-row gap-2">
+							<IconEditOff /> No changes found :/
+						</div>
 					)}
 				</>
 			);
