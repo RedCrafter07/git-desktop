@@ -464,7 +464,7 @@ const Content = () => {
 		const ModeRepos = () => {
 			return (
 				<div className="h-full">
-					<div className="flex flex-row items-start repo-card">
+					<div className="flex flex-row items-start repo-card repo-card-color">
 						<IconPlus />
 						<div
 							className="ml-2"
