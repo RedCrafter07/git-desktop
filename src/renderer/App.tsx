@@ -354,12 +354,20 @@ const Content = () => {
 								key={`repo-${i}`}
 							>
 								<div className="flex flex-row items-center">
-									<Tooltip label={url} withArrow>
+									<Tooltip
+										label={url}
+										withArrow
+										position="right"
+									>
 										<div>
 											<Icon size={20} />
 										</div>
 									</Tooltip>
-									<Tooltip label={repo.path} withArrow>
+									<Tooltip
+										label={repo.path}
+										withArrow
+										position="right"
+									>
 										<div className="ml-2">{repo.name}</div>
 									</Tooltip>
 								</div>
