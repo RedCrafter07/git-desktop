@@ -19,6 +19,7 @@ import { LoadingDiv } from './components/LoadingDiv';
 import { AnimatePresence, motion } from 'framer-motion';
 import Radio from './components/Radio';
 import Tooltip from './components/Tooltip';
+import { useHotkeys } from '@mantine/hooks';
 
 const { ipcRenderer: ipc } = window.require('electron/renderer');
 
@@ -157,7 +158,7 @@ const Content = () => {
 	};
 
 	const AddRepoModal = () => {
-		const [mode, setMode] = useState<'clone' | 'local'>('local');
+		const [mode, setMode] = useState<'clone' | 'local'>('clone');
 		const [repoPath, setRepoPath] = useState('');
 		const [repoURL, setRepoURL] = useState('');
 		const [error, setError] = useState<string | undefined>(undefined);
@@ -189,7 +190,102 @@ const Content = () => {
 				<div className="my-4" />
 
 				{mode === 'clone' ? (
-					<>Soon</>
+					<>
+						<p>Enter a URL to clone</p>
+						<div className="flex flex-row gap-2">
+							<input
+								type="text"
+								className="input flex-grow"
+								placeholder="https://github.com/RedCrafter07/git-desktop.git"
+								value={repoURL}
+								onChange={(e) => {
+									setRepoURL(e.target.value);
+								}}
+							/>
+						</div>
+						<br />
+						<div className="flex flex-row gap-2">
+							<input
+								type="text"
+								className="input flex-grow"
+								placeholder="G:\GitDesktop\projects\git-desktop"
+								value={repoPath}
+								onChange={(e) => {
+									setRepoPath(e.target.value);
+								}}
+							/>
+							<button
+								className="btn btn-primary"
+								onClick={() => {
+									ipc.send(
+										'open-clone-folder-dialog',
+										repoPath
+									);
+
+									ipc.once(
+										'open-clone-folder-dialog',
+										(
+											_e,
+											{
+												isEmpty,
+												path,
+											}: {
+												path: string;
+												isEmpty: boolean;
+											}
+										) => {
+											if (!path) return;
+											if (!isEmpty) {
+												setError('Folder is not empty');
+												return;
+											}
+											setRepoPath(path);
+										}
+									);
+								}}
+							>
+								Find
+							</button>
+						</div>
+						<br />
+						<button
+							className="btn btn-block btn-primary"
+							onClick={() => {
+								if (repoURL.length < 1) return;
+								if (!repoURL.endsWith('.git')) {
+									setError('The URL must end with .git');
+									return;
+								}
+
+								ipc.send('clone-repository', repoURL, repoPath);
+								ipc.once(
+									'clone-repository',
+									(
+										_e,
+										data: {
+											error: string | null;
+											success: boolean;
+										}
+									) => {
+										if (!data.success && data.error) {
+											setError(data.error);
+										} else {
+											setModal(undefined);
+											refetchRepos();
+										}
+									}
+								);
+							}}
+							disabled={
+								repoURL.length == 0 ||
+								!repoURL.endsWith('.git') ||
+								repoPath.length == 0
+							}
+						>
+							Clone
+						</button>
+						{error && <p className="text-error">{error}</p>}
+					</>
 				) : (
 					<>
 						<p>Select a folder or type in the path.</p>
@@ -463,6 +559,15 @@ const Content = () => {
 };
 
 const App = () => {
+	useHotkeys([
+		[
+			'ctrl+shift+alt+c',
+			() => {
+				ipc.send('open-config');
+			},
+		],
+	]);
+
 	return (
 		<div className="flex flex-col h-screen text-base-content bg-base-300">
 			<div className="webkit-drag h-8 flex flex-row items-center justify-between z-[420]">
