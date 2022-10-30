@@ -464,7 +464,7 @@ const Content = () => {
 const App = () => {
 	return (
 		<div className="flex flex-col h-screen text-base-content bg-base-300">
-			<div className="webkit-drag h-8 flex flex-row items-center justify-between">
+			<div className="webkit-drag h-8 flex flex-row items-center justify-between z-[420]">
 				<div className="px-2 flex flex-row space-x-1">
 					<IconBrandGit />
 					<IconDeviceDesktop />
