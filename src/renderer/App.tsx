@@ -12,13 +12,15 @@ import {
 	IconBrandBitbucket,
 	IconBrandGitlab,
 	IconServer2,
+	IconPlus,
 } from '@tabler/icons';
 import { ReactNode as Node, useEffect, useRef, useState } from 'react';
 import { LoadingDiv } from './components/LoadingDiv';
-import { useDebouncedState, useSetState } from '@mantine/hooks';
 import { AnimatePresence, motion } from 'framer-motion';
+import Radio from './components/Radio';
+import Tooltip from './components/Tooltip';
 
-const { ipcRenderer } = window.require('electron/renderer');
+const { ipcRenderer: ipc } = window.require('electron/renderer');
 
 // From: https://stackoverflow.com/a/53276873/13411306
 /**
@@ -80,6 +82,11 @@ const Content = () => {
 	const [sidebarMode, setSidebarMode] = useState<'repos' | 'changes'>(
 		'repos'
 	);
+	const [selectedRepo, setSelectedRepo] = useState<string>();
+
+	const [modal, setModal] = useState<
+		{ component: JSX.Element; name: string } | undefined
+	>();
 
 	const translations: Record<typeof step, string> = {
 		loading: 'Loading...',
@@ -88,9 +95,52 @@ const Content = () => {
 	};
 
 	const [settings, setSettings] = useState<Settings>();
+
+	const [repos, setRepos] = useState<Repository[]>([]);
+
+	const refetchRepos = () => {
+		ipc.send('get-repositories');
+
+		ipc.once('get-repositories', (e, repos: Repository[]) => {
+			setRepos(repos);
+		});
+	};
+
 	const Body = () => {
 		return (
 			<div className="h-full p-2">
+				<AnimatePresence mode="wait">
+					{modal && (
+						<motion.div
+							initial={{
+								opacity: 0,
+								y: 200,
+							}}
+							animate={{
+								opacity: 1,
+								y: 0,
+							}}
+							exit={{
+								opacity: 0,
+								y: 200,
+							}}
+							key={modal.name}
+							className="z-50 fixed top-0 left-0 bg-black bg-opacity-50 w-full h-full grid place-items-center"
+						>
+							<div className="bg-base-200 rounded-lg p-4 w-3/4 h-3/4">
+								<div className="flex flex-row justify-end">
+									<IconX
+										className="opacity-50 hover:opacity-100"
+										onClick={() => {
+											setModal(undefined);
+										}}
+									/>
+								</div>
+								{modal.component}
+							</div>
+						</motion.div>
+					)}
+				</AnimatePresence>
 				{!loading ? (
 					<div>
 						<h1>Hi</h1>
@@ -106,58 +156,227 @@ const Content = () => {
 		);
 	};
 
+	const AddRepoModal = () => {
+		const [mode, setMode] = useState<'clone' | 'local'>('local');
+		const [repoPath, setRepoPath] = useState('');
+		const [error, setError] = useState<string | undefined>(undefined);
+
+		return (
+			<div>
+				<h1>Add a new repo</h1>
+				<p>How would you like to add it?</p>
+
+				<Radio
+					type="radio"
+					name="mode"
+					id="clone"
+					value="clone"
+					checked={mode === 'clone'}
+					onChange={() => setMode('clone')}
+					label="Clone from a remote"
+				/>
+				<Radio
+					type="radio"
+					name="mode"
+					id="local"
+					value="local"
+					checked={mode === 'local'}
+					onChange={() => setMode('local')}
+					label="Add a local repo"
+				/>
+
+				<div className="my-4" />
+
+				{mode === 'clone' ? (
+					<>Soon</>
+				) : (
+					<>
+						<p>Select a folder or type in the path.</p>
+						<div className="flex flex-row gap-2">
+							<input
+								type="text"
+								className="input flex-grow"
+								placeholder="G:\GitDesktop\Project"
+								value={repoPath}
+								onChange={(e) => setRepoPath(e.target.value)}
+							/>
+							<button
+								className="btn btn-info"
+								onClick={() => {
+									ipc.send('open-git-folder-dialog');
+
+									ipc.once(
+										'open-git-folder-dialog',
+										(
+											_e,
+											data: {
+												path: string;
+												isRepo: boolean;
+											}
+										) => {
+											console.log(data);
+											setRepoPath(data.path);
+											if (data.isRepo) {
+												setError(undefined);
+											} else {
+												setError(
+													'This folder is not a git repo.'
+												);
+											}
+										}
+									);
+								}}
+							>
+								Find
+							</button>
+							<button
+								className="btn btn-success"
+								disabled={!!error || !repoPath}
+								onClick={() => {
+									if (!repoPath) return;
+									ipc.send('add-repository', repoPath);
+
+									ipc.once('add-repository', (_e, data) => {
+										if (data.error) {
+											setError(data.error);
+										} else {
+											setModal(undefined);
+											setError(undefined);
+											refetchRepos();
+										}
+									});
+								}}
+							>
+								Accept
+							</button>
+						</div>
+						<div className="my-2" />
+
+						{error && <p className="text-error">{error}</p>}
+
+						<AnimatePresence>
+							{error == 'This folder is not a git repo.' && (
+								<motion.button
+									initial={{
+										opacity: 0,
+									}}
+									animate={{
+										opacity: 1,
+									}}
+									exit={{
+										opacity: 0,
+									}}
+									transition={{
+										duration: 0.3,
+									}}
+									className="btn btn-block btn-warning"
+									onClick={() => {
+										ipc.send('init-repository', repoPath);
+
+										ipc.once(
+											'init-repository',
+											(_e, initialized: boolean) => {
+												if (initialized) {
+													setError(undefined);
+												} else {
+													setError(
+														'Failed to initialize the repository.'
+													);
+												}
+											}
+										);
+									}}
+								>
+									Initialize Git Repository
+								</motion.button>
+							)}
+						</AnimatePresence>
+					</>
+				)}
+			</div>
+		);
+	};
+
 	const Sidebar = () => {
 		const ModeRepos = () => {
 			return (
-				<div className="flex flex-col h-full">
-					{(settings?.repositories ? settings.repositories : []).map(
-						(repo, i) => {
-							const remoteTypes = [
-								...new Set(repo.remotes.map((r) => r.type)),
-							];
+				<div className="h-full">
+					<div className="flex flex-row items-start repo-card">
+						<IconPlus />
+						<div
+							className="ml-2"
+							onClick={() => {
+								setModal({
+									name: 'add-repo',
+									component: <AddRepoModal />,
+								});
+							}}
+						>
+							Add Repository
+						</div>
+					</div>
 
-							let Icon: TablerIcon = IconDeviceDesktop;
+					{repos.map((repo, i) => {
+						const remoteTypes = [
+							...new Set(repo.remotes.map((r) => r.type)),
+						];
 
-							if (remoteTypes.length === 1) {
-								switch (remoteTypes[0]) {
-									case 'bitbucket':
-										Icon = IconBrandBitbucket;
-										break;
-									case 'github':
-										Icon = IconBrandGithub;
-										break;
-									case 'gitlab':
-										Icon = IconBrandGitlab;
-										break;
-									default:
-										Icon = IconBrandGit;
-										break;
-								}
-							} else if (remoteTypes.length > 1) {
-								Icon = IconServer2;
+						let Icon: TablerIcon = IconBrandGit;
+
+						let url: string = 'Local';
+
+						if (remoteTypes.length === 1) {
+							switch (remoteTypes[0]) {
+								case 'bitbucket':
+									Icon = IconBrandBitbucket;
+
+									break;
+								case 'github':
+									Icon = IconBrandGithub;
+									break;
+								case 'gitlab':
+									Icon = IconBrandGitlab;
+									break;
+								default:
+									Icon = IconServer2;
+									break;
 							}
+							url = repo.remotes[0].url;
+						} else if (remoteTypes.length > 1) {
+							Icon = IconServer2;
 
-							return (
-								<div
-									className="flex flex-col items-start justify-between p-2 border-b border-white border-opacity-5"
-									key={`repo-${i}`}
-								>
-									<div className="flex flex-row items-center">
-										<Icon size={20} />
-										<div className="ml-2">{repo.name}</div>
-									</div>
-									<div className="flex flex-row items-center"></div>
-								</div>
-							);
+							url = 'Multiple remotes';
 						}
-					)}
+
+						return (
+							<div
+								className="flex flex-col items-start justify-between repo-card"
+								key={`repo-${i}`}
+							>
+								<div className="flex flex-row items-center">
+									<Tooltip label={url} withArrow>
+										<div>
+											<Icon size={20} />
+										</div>
+									</Tooltip>
+									<Tooltip label={repo.path} withArrow>
+										<div className="ml-2">{repo.name}</div>
+									</Tooltip>
+								</div>
+							</div>
+						);
+					})}
 				</div>
 			);
 		};
 
+		const ModeChanges = () => {
+			return <></>;
+		};
+
 		return (
 			<div>
-				<div className="grid grid-cols-2 text-center h-12 border-b border-white border-opacity-5">
+				<div className="grid grid-cols-2 text-center h-12 border-b border-white border-opacity-5 max-h-min overflow-y-auto">
 					<div
 						onClick={() => {
 							setSidebarMode('repos');
@@ -187,36 +406,37 @@ const Content = () => {
 						</p>
 					</div>
 				</div>
-				<ModeRepos />
+				{sidebarMode == 'changes' ? <ModeChanges /> : <ModeRepos />}
 			</div>
 		);
 	};
 
 	useEffect(() => {
-		ipcRenderer.send('window-ready');
+		ipc.send('window-ready');
 
-		ipcRenderer.on('load-settings', (e, value: Settings) => {
+		ipc.on('load-settings', (e, value: Settings) => {
 			setSettings(value);
 			setStep('starting');
 
-			ipcRenderer.removeListener('load-settings', () => {});
+			ipc.removeListener('load-settings', () => {});
 		});
 	}, []);
 
 	useEffect(() => {
 		if (settings && step != 'finished') {
 			setStep('finished');
+			setRepos(
+				(settings.repositories || []).sort((a, b) =>
+					a.lastEdited < b.lastEdited ? 1 : -1
+				)
+			);
 			setTimeout(() => {
 				setLoading(false);
-				ipcRenderer.send(
-					'add-repository',
-					'D:\\Programming\\Github\\git-desktop'
-				);
 			}, 1000);
 			return;
 		}
 
-		ipcRenderer.send('save-settings', settings);
+		ipc.send('save-settings', settings);
 	}, [settings]);
 
 	const widthSetter = (width: string) => {
@@ -246,7 +466,7 @@ const App = () => {
 					<div
 						className="menu-button"
 						onClick={() => {
-							ipcRenderer.send('minimize');
+							ipc.send('minimize');
 						}}
 					>
 						<IconMinus />
@@ -254,7 +474,7 @@ const App = () => {
 					<div
 						className="menu-button"
 						onClick={() => {
-							ipcRenderer.send('maximize');
+							ipc.send('maximize');
 						}}
 					>
 						<IconMaximize />
@@ -262,7 +482,7 @@ const App = () => {
 					<div
 						className="menu-close-button"
 						onClick={() => {
-							ipcRenderer.send('close');
+							ipc.send('close');
 						}}
 					>
 						<IconX />
