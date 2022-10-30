@@ -40,7 +40,11 @@ h3 {
 }
 
 .repo-card {
-	@apply p-2 border-b border-white border-opacity-5 bg-base-100 bg-opacity-0 hover:bg-opacity-50 select-none cursor-pointer overflow-y-auto;
+	@apply p-2 border-b border-white border-opacity-5 select-none cursor-pointer overflow-y-auto;
+}
+
+.repo-card .repo-card-color {
+	@apply bg-base-100 bg-opacity-0 hover:bg-opacity-50;
 }
 
 ::-webkit-scrollbar {
