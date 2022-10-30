@@ -131,6 +131,13 @@ ipcMain.on('init-repository', async (e, path: string) => {
 	e.reply('init-repository', true);
 });
 
+ipcMain.on('clone-repository', async (e, url: string, path: string) => {
+	const git = simpleGit(path);
+	await git.clone(url, path);
+
+	e.reply('clone-repository', { success: true });
+});
+
 ipcMain.on('open-git-folder-dialog', async (e, path: string) => {
 	const result = await dialog.showOpenDialog(mainWindow, {
 		properties: ['openDirectory'],
