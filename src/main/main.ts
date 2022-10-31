@@ -261,6 +261,7 @@ ipc.on('get-changes', async (e, path: string) => {
 			// check what changed in which line
 			const changes = diff
 				.split('\n')
+				.slice(4)
 				.map((l, i) => ({
 					line: i,
 					data: l,
