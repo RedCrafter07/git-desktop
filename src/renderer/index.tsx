@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import '@fontsource/figtree';
+import '@fontsource/source-code-pro';
 import Wrappers from './wrappers';
 
 const container = document.getElementById('root')!;
