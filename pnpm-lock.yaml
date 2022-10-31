@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@emotion/react': ^11.10.5
   '@fontsource/figtree': ^4.5.1
+  '@fontsource/source-code-pro': ^4.5.12
   '@mantine/core': ^5.6.3
   '@mantine/dropzone': ^5.6.3
   '@mantine/hooks': ^5.6.3
@@ -90,6 +91,7 @@ specifiers:
 dependencies:
   '@emotion/react': 11.10.5_bbvjflvjoibwhtpmedigb26h6y
   '@fontsource/figtree': 4.5.1
+  '@fontsource/source-code-pro': 4.5.12
   '@mantine/core': 5.6.3_4md2hhxmujtaycbumrxkp2e5ju
   '@mantine/dropzone': 5.6.3_hliqdvg4trnmlenfv3ync25tfa
   '@mantine/hooks': 5.6.3_react@18.2.0
@@ -754,6 +756,10 @@ packages:
 
   /@fontsource/figtree/4.5.1:
     resolution: {integrity: sha512-VZjPzbD8+HdTgWI29myAkCsGiidTvCUJ18gsqd+g4ZkdpNFphn/zwlWiudbiICjrQMbC9Q+ZFkDmE+s9ysfGFg==}
+    dev: false
+
+  /@fontsource/source-code-pro/4.5.12:
+    resolution: {integrity: sha512-6r1dykX7SH1Orm7xUh4sA8pjM1uNPKo9fV+y9/wxS+y/fwN+sMf6b1jHDUTmfEtw1OxlTaHGrr2I7dGeNqxdPA==}
     dev: false
 
   /@formatjs/ecma402-abstract/1.13.0:

@@ -101,6 +101,7 @@
 	"dependencies": {
 		"@emotion/react": "^11.10.5",
 		"@fontsource/figtree": "^4.5.1",
+		"@fontsource/source-code-pro": "^4.5.12",
 		"@mantine/core": "^5.6.3",
 		"@mantine/dropzone": "^5.6.3",
 		"@mantine/hooks": "^5.6.3",
