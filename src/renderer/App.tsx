@@ -753,9 +753,7 @@ const Content = () => {
 		if (settings && step != 'finished') {
 			setStep('finished');
 			refetchRepos();
-			setTimeout(() => {
-				setLoading(false);
-			}, 1000);
+			setLoading(false);
 			return;
 		}
 
