@@ -58,3 +58,7 @@ h3 {
 ::-webkit-scrollbar-thumb {
 	@apply bg-base-100 bg-opacity-50 hover:bg-opacity-100;
 }
+
+.source-code-pro > * {
+	font-family: 'Source Code Pro', monospace;
+}
