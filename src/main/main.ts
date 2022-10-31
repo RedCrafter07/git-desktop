@@ -280,6 +280,7 @@ ipc.on('get-changes', async (e, path: string) => {
 			return {
 				...file,
 				changes,
+				path: file.path.replace(/\\/g, '/'),
 			};
 		})
 	);
