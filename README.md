@@ -5,3 +5,7 @@ Git Desktop is a simple, easy to use, and powerful Git client for Windows and Ma
 ## IMPORTANT NOTE
 
 This project is still work in progress. Please do not expect it to work.
+
+
+## Boilerplate
+This project was created based on the [Electron React Boilerplate](https://electron-react-boilerplate.js.org/).
