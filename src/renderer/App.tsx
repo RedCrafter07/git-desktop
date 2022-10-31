@@ -156,7 +156,7 @@ const Content = () => {
 			path: string;
 		}[]
 	>([]);
-	const [diff, setDiff] = useState<Diff>();
+	const [diff, setDiff] = useState<Diff[]>();
 	const [selectedFile, setSelectedFile] = useState<string>();
 
 	const translations: Record<typeof step, string> = {
@@ -212,7 +212,27 @@ const Content = () => {
 				</AnimatePresence>
 				{!loading ? (
 					<div>
-						<h1>Hi</h1>
+						{selectedFile ? (
+							<div className="source-code-pro">
+								{(diff || [])
+									.find((c) => c.path == selectedFile)
+									.changes.map((c) => {
+										return (
+											<p
+												className={
+													c.type == Type.Added
+														? 'bg-success-content text-success bg-opacity-50'
+														: 'bg-error text-error-content bg-opacity-50'
+												}
+											>
+												{c.line} {c.content}
+											</p>
+										);
+									})}
+							</div>
+						) : (
+							<h1>Hi</h1>
+						)}
 					</div>
 				) : (
 					<LoadingDiv
@@ -525,7 +545,7 @@ const Content = () => {
 										(await getDataFromIPC(
 											'get-changes',
 											repo.path
-										)) as [Changes, Diff];
+										)) as [Changes, Diff[]];
 
 									setDiff(diff);
 									setSelectedRepo(repo.path);
@@ -663,7 +683,7 @@ const Content = () => {
 										selectedFile == path
 											? 'bg-info bg-opacity-100 hover:bg-opacity-75 text-info-content'
 											: 'bg-base-100 bg-opacity-0 hover:bg-opacity-100'
-									} border-opacity-5 gap-2 select-none cursor-pointer`}
+									} border-opacity-5 gap-1 select-none cursor-pointer`}
 									key={i}
 									onClick={() => {
 										setSelectedFile(path);
