@@ -157,6 +157,7 @@ const Content = () => {
 		}[]
 	>([]);
 	const [diff, setDiff] = useState<Diff>();
+	const [selectedFile, setSelectedFile] = useState<string>();
 
 	const translations: Record<typeof step, string> = {
 		loading: 'Loading...',
@@ -658,8 +659,15 @@ const Content = () => {
 
 							return (
 								<div
-									className="flex flex-row p-2 border-b-white border-b border-opacity-5 gap-2 hover:bg-base-100 select-none cursor-pointer"
+									className={`flex flex-row p-2 border-b-white border-b ${
+										selectedFile == path
+											? 'bg-info bg-opacity-100 hover:bg-opacity-75 text-info-content'
+											: 'bg-base-100 bg-opacity-0 hover:bg-opacity-100'
+									} border-opacity-5 gap-2 select-none cursor-pointer`}
 									key={i}
+									onClick={() => {
+										setSelectedFile(path);
+									}}
 								>
 									<input
 										type="checkbox"
