@@ -213,22 +213,34 @@ const Content = () => {
 				{!loading ? (
 					<div>
 						{selectedFile ? (
-							<div className="source-code-pro">
-								{(diff || [])
-									.find((c) => c.path == selectedFile)
-									.changes.map((c) => {
-										return (
-											<p
-												className={
-													c.type == Type.Added
-														? 'bg-success-content text-success bg-opacity-50'
-														: 'bg-error text-error-content bg-opacity-50'
-												}
-											>
-												{c.line} {c.content}
+							<div className="flex flex-row gap-2">
+								<div className="pl-1 font-roboto">
+									{(diff || [])
+										.find((c) => c.path == selectedFile)
+										.changes.map((c) => (
+											<p className="text-right">
+												{c.line}
 											</p>
-										);
-									})}
+										))}
+								</div>
+
+								<div className="source-code-pro flex-grow">
+									{(diff || [])
+										.find((c) => c.path == selectedFile)
+										.changes.map((c) => {
+											return (
+												<p
+													className={
+														c.type == Type.Added
+															? 'bg-success-content text-success bg-opacity-50'
+															: 'bg-error text-error-content bg-opacity-50'
+													}
+												>
+													{c.content}
+												</p>
+											);
+										})}
+								</div>
 							</div>
 						) : (
 							<h1>Hi</h1>
