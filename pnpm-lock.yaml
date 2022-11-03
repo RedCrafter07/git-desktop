@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@emotion/react': ^11.10.5
   '@fontsource/figtree': ^4.5.1
+  '@fontsource/roboto': ^4.5.8
   '@fontsource/source-code-pro': ^4.5.12
   '@mantine/core': ^5.6.3
   '@mantine/dropzone': ^5.6.3
@@ -91,6 +92,7 @@ specifiers:
 dependencies:
   '@emotion/react': 11.10.5_bbvjflvjoibwhtpmedigb26h6y
   '@fontsource/figtree': 4.5.1
+  '@fontsource/roboto': 4.5.8
   '@fontsource/source-code-pro': 4.5.12
   '@mantine/core': 5.6.3_4md2hhxmujtaycbumrxkp2e5ju
   '@mantine/dropzone': 5.6.3_hliqdvg4trnmlenfv3ync25tfa
@@ -756,6 +758,10 @@ packages:
 
   /@fontsource/figtree/4.5.1:
     resolution: {integrity: sha512-VZjPzbD8+HdTgWI29myAkCsGiidTvCUJ18gsqd+g4ZkdpNFphn/zwlWiudbiICjrQMbC9Q+ZFkDmE+s9ysfGFg==}
+    dev: false
+
+  /@fontsource/roboto/4.5.8:
+    resolution: {integrity: sha512-CnD7zLItIzt86q4Sj3kZUiLcBk1dSk81qcqgMGaZe7SQ1P8hFNxhMl5AZthK1zrDM5m74VVhaOpuMGIL4gagaA==}
     dev: false
 
   /@fontsource/source-code-pro/4.5.12:
