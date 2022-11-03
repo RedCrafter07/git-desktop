@@ -177,7 +177,7 @@ const Content = () => {
 
 	const Body = () => {
 		return (
-			<div className="h-full p-2">
+			<div className={`h-full ${!selectedFile && 'p-2'}`}>
 				<AnimatePresence mode="wait">
 					{modal && (
 						<motion.div
